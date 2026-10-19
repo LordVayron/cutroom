@@ -10,6 +10,12 @@
 
 ## Independent clean check
 
+Passed on 2026-10-19 for public source commit `9e5b626`:
+[Clean source verification](https://github.com/LordVayron/cutroom/actions/runs/39313698543).
+This includes fresh backend/frontend images, installer tests, backend tests/lint,
+frontend tests/lint, and the frontend production build. A fresh public clone also
+passed the four installer tests and Python syntax compilation locally.
+
 The Clean source verification GitHub Actions workflow builds fresh backend and
 frontend images, runs backend/frontend tests and lint, and builds the frontend.
 It has read-only repository permissions, no provider credentials, no private
