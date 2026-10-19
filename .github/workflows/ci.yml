@@ -22,7 +22,7 @@ jobs:
       - name: Build backend without credentials or media
         run: docker build -t cutroom-api ./services/api
       - name: Backend tests and lint
-        run: docker run --rm cutroom-api sh -c "pytest -q && ruff check app tests"
+        run: docker run --rm -v "$PWD/services/api/tests:/app/tests:ro" cutroom-api sh -c "pytest -q && ruff check app tests"
       - name: Build frontend
         run: docker build -t cutroom-web ./apps/web
       - name: Frontend tests, lint, and production build
