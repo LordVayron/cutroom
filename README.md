@@ -4,6 +4,10 @@ Cutroom turns long videos and podcasts into ranked short-form clip candidates,
 then lets you refine framing, captions, and branding before exporting MP4s.
 It is a local-first Next.js / FastAPI application, not a hosted publishing service.
 
+[Product website](https://cutroom-website-delta.vercel.app) ·
+[Website source](https://github.com/LordVayron/cutroom-website).
+The Vercel landing page introduces the product; it does not host the editor.
+
 ## Install with your coding agent
 
 Give Codex, Claude Code, or another local coding agent the public repository URL:

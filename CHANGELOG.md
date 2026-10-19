@@ -1,5 +1,13 @@
 # Changelog
 
+## Product website — 2026-10-19
+
+- Implemented the approved organic editorial direction as responsive HTML/CSS.
+- Explained the time spent finding, reframing, and captioning clips; added setup,
+  product workflow, Director Mode, branding, feature details, and truthful FAQs.
+- Replaced private episode captures with real UI screenshots using synthetic data.
+- GitHub download CTAs, separate public website repository, Vercel deployment.
+
 ## 2026-10-19 — Public-source preparation
 
 Refresh documentation, setup, feature status, security, and agent instructions.

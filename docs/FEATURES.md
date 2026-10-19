@@ -27,7 +27,10 @@ Cover Designer UI and ordinary cover generation were removed; legacy routes,
 schema fields, and tests remain. Manual analytics were removed. Real analytics,
 Composio/social OAuth, external posting, multi-account delivery, billing,
 production auth/tenant isolation, and three-person stacks are not implemented.
-Production landing-page work is paused; private design concepts are not a live site.
+The production product website is deployed separately at
+https://cutroom-website-delta.vercel.app, with source in
+https://github.com/LordVayron/cutroom-website. It uses actual UI captures with
+synthetic demo data, not private episode screenshots. The editor still runs locally.
 
 Tracking and inspection are heuristics, not guarantees. Duplicate detection is
 not a universal multilingual semantic model. Caption timing varies by source.
