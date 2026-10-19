@@ -1,0 +1,92 @@
+x-api-environment: &api-environment
+  DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://clipfactory:clipfactory@postgres:5432/clipfactory}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  STORAGE_PATH: /data/storage
+  WORKER_MAX_RETRIES: ${WORKER_MAX_RETRIES:-3}
+  WORKER_JOB_LEASE_SECONDS: ${WORKER_JOB_LEASE_SECONDS:-30}
+  WORKER_HEARTBEAT_SECONDS: ${WORKER_HEARTBEAT_SECONDS:-10}
+  INGEST_MAX_HEIGHT: ${INGEST_MAX_HEIGHT:-720}
+  MIN_SOURCE_DURATION_SECONDS: ${MIN_SOURCE_DURATION_SECONDS:-30}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENAI_SCORING_MODEL: ${OPENAI_SCORING_MODEL:-gpt-5.6-sol}
+  OPENAI_TRANSCRIPTION_MODEL: ${OPENAI_TRANSCRIPTION_MODEL:-whisper-1}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: clipfactory
+      POSTGRES_USER: clipfactory
+      POSTGRES_PASSWORD: clipfactory
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clipfactory"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - redis_data:/data
+
+  api:
+    build: ./services/api
+    environment: *api-environment
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./services/api:/app
+      - ./storage:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --reload"
+
+  worker:
+    build: ./services/api
+    environment: *api-environment
+    volumes:
+      - ./services/api:/app
+      - ./storage:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    command: python -m app.worker
+
+  web:
+    build: ./apps/web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - web_node_modules:/app/node_modules
+    depends_on:
+      api:
+        condition: service_healthy
+    command: npm run dev -- --hostname 0.0.0.0
+
+volumes:
+  postgres_data:
+  redis_data:
+  web_node_modules:

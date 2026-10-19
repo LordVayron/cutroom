@@ -1,0 +1,15 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+sqlalchemy[asyncio]==2.0.43
+asyncpg==0.30.0
+alembic==1.16.5
+redis[hiredis]==6.4.0
+python-multipart==0.0.20
+pydantic-settings==2.10.1
+aiofiles==24.1.0
+yt-dlp==2026.8.19
+openai==2.29.0
+opencv-python-headless==4.14.0.94
+pytest==8.4.2
+pytest-asyncio==1.1.0
+ruff==0.12.12
