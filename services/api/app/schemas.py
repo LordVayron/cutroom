@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -151,23 +151,6 @@ class BatchAccepted(BaseModel):
     job_id: str
     status: str = "pending"
     clip_count: int
-
-
-class AutoScheduleRequest(BaseModel):
-    clip_ids: list[str] = Field(min_length=1, max_length=20)
-    days: int = Field(ge=1, le=7)
-    start_date: date | None = None
-    timezone_offset_minutes: int = Field(default=0, ge=-840, le=840)
-    platforms: list[Literal["tiktok", "reels", "shorts", "linkedin"]] = Field(
-        min_length=1, max_length=4
-    )
-
-
-class ManualScheduleRequest(BaseModel):
-    scheduled_for: datetime
-    platforms: list[Literal["tiktok", "reels", "shorts", "linkedin"]] = Field(
-        min_length=1, max_length=4
-    )
 
 
 class CoverSelectionRequest(BaseModel):

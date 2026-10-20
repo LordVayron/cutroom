@@ -28,3 +28,10 @@ stopped. No database or media was deleted to repair it.
 Neither source tests nor successful startup prove a new user's real source can
 be downloaded/transcribed/rendered. That remains dependent on authorized media,
 caption availability, provider access, and source-specific human review.
+
+## Calendar removal — 2026-10-20
+
+The public source snapshot passed 78 backend tests, including checks that
+schedule-writing routes are absent and approval/export routes remain.
+Branded screenshots use fictional data and show the calendar-free workspace.
+No private media, provider calls, or real-source renders were needed for removal.

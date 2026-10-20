@@ -16,12 +16,14 @@ Updated for the 2026-10-19 source release.
 - Brand defaults/inheritance and per-film overrides; collapsible folders,
   three-dot actions, archive/restore, and soft removal.
 - Batch rendering, inspection, human review/approval, and MP4 export.
-- Calendar platforms, dates, even 1–7 day distribution, draft titles/captions,
-  and internal queued schedules.
 - Transcript, analysis, layout, and tracking caches.
 - Plum/ivory/sage UI and PNG wordmark.
 
 ## Removed or deferred
+
+The publishing calendar, scheduling controls, and schedule-writing API routes
+have been removed. Existing records remain stored for compatibility.
+Rendering, approval, and MP4 export remain available.
 
 Cover Designer UI and ordinary cover generation were removed; legacy routes,
 schema fields, and tests remain. Manual analytics were removed. Real analytics,

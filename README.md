@@ -92,13 +92,12 @@ those settings, and individual clips remain editable.
 - Brand folders with inherited defaults and per-film caption overrides.
 - Collapsible library, three-dot actions, archive/restore, and soft removal.
 - Render all, quality inspection, human review/approval, and MP4 export.
-- Calendar platforms, manual dates, even 1–7 day distribution, and SEO-caption drafts.
 - Transcript, analysis, layout, and tracking caches.
 - Plum/ivory/sage interface and PNG wordmark.
 
 ## Limits and deferred integrations
 
-The calendar stores an **internal publishing queue**. Social OAuth, Composio,
+The publishing calendar has been removed. Social OAuth, Composio,
 external posting, multi-account delivery, analytics ingestion, performance-based
 learning, production authentication, and billing are not implemented.
 Manual analytics and the Cover Designer UI were removed; legacy cover schema

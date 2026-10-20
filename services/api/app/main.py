@@ -4,8 +4,7 @@ import json
 import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime, time, timedelta
-from math import floor
+from datetime import UTC, datetime
 from pathlib import Path
 
 import aiofiles
@@ -27,7 +26,6 @@ from app.domain import (
 from app.layout import analyze_layout
 from app.media import CAPTION_WORDS_PER_PHRASE, CURRENT_RENDER_VERSION
 from app.models import BrandFolder, Clip, Project, PublicationSchedule
-from app.providers import generate_publishing_copy
 from app.quality import QUALITY_INSPECTOR_VERSION
 from app.queue import (
     create_job,
@@ -36,7 +34,6 @@ from app.queue import (
     retry_failed_job,
 )
 from app.schemas import (
-    AutoScheduleRequest,
     BatchAccepted,
     BrandFolderOut,
     ClipOut,
@@ -47,7 +44,6 @@ from app.schemas import (
     FeedbackRequest,
     HookRepairOut,
     JobAccepted,
-    ManualScheduleRequest,
     ProjectOut,
     ProjectSummary,
     PublicationOut,
@@ -1078,131 +1074,6 @@ async def inspect_clip_quality(
     await session.commit()
     await notify_worker(job.id)
     return JobAccepted(job_id=job.id, status=job.status)
-
-
-def _publishing_payload(project: Project, clips: list[Clip]) -> list[dict[str, str]]:
-    payload: list[dict[str, str]] = []
-    for clip in clips:
-        transcript = " ".join(
-            segment.text
-            for segment in project.transcript
-            if segment.start_seconds < clip.end_seconds
-            and segment.end_seconds > clip.start_seconds
-        )
-        payload.append(
-            {
-                "clip_id": clip.id,
-                "title": clip.title,
-                "rationale": clip.rationale,
-                "transcript": transcript,
-            }
-        )
-    return payload
-
-
-def _approved_current_clips(project: Project, clip_ids: list[str]) -> list[Clip]:
-    requested = set(clip_ids)
-    clips = [
-        item
-        for item in project.clips
-        if item.id in requested and item.is_current and item.status == "approved"
-    ]
-    if len(clips) != len(requested):
-        raise HTTPException(
-            status_code=409, detail="Only current, approved clips can enter the publishing queue"
-        )
-    return sorted(clips, key=lambda item: item.rank)
-
-
-async def _publishing_copy(
-    project: Project, clips: list[Clip]
-) -> dict[str, tuple[str, str]]:
-    copy = {
-        clip.id: (clip.publication.cover_title, clip.publication.seo_caption)
-        for clip in clips
-        if clip.publication
-    }
-    missing = [clip for clip in clips if not clip.publication]
-    copy.update(
-        await generate_publishing_copy(
-            _publishing_payload(project, missing), settings.openai_scoring_model
-        )
-    )
-    return copy
-
-
-async def _upsert_publication(
-    session: AsyncSession,
-    project: Project,
-    clip: Clip,
-    scheduled_for: datetime,
-    copy: tuple[str, str],
-    platforms: list[str],
-) -> None:
-    publication = clip.publication or PublicationSchedule(
-        project_id=project.id,
-        clip_id=clip.id,
-        scheduled_for=scheduled_for,
-        cover_title=copy[0],
-        seo_caption=copy[1],
-    )
-    publication.scheduled_for = scheduled_for
-    publication.cover_title = copy[0]
-    publication.seo_caption = copy[1]
-    publication.platforms = json.dumps(list(dict.fromkeys(platforms)))
-    publication.status = "queued"
-    if not clip.publication:
-        session.add(publication)
-
-
-@app.post("/api/projects/{project_id}/schedule/auto", response_model=ProjectOut)
-async def auto_schedule_clips(
-    project_id: str,
-    request: AutoScheduleRequest,
-    session: AsyncSession = Depends(get_session),
-) -> ProjectOut:
-    project = await load_project(session, project_id)
-    clips = _approved_current_clips(project, request.clip_ids)
-    copy = await _publishing_copy(project, clips)
-    start_date = request.start_date or datetime.now(UTC).date()
-    slots_per_day: dict[int, int] = {}
-    for index, clip in enumerate(clips):
-        day_offset = min(request.days - 1, floor(index * request.days / len(clips)))
-        slot = slots_per_day.get(day_offset, 0)
-        slots_per_day[day_offset] = slot + 1
-        local_publish_time = datetime.combine(
-            start_date + timedelta(days=day_offset),
-            time(hour=min(21, 10 + slot * 3)),
-        )
-        scheduled_for = (
-            local_publish_time + timedelta(minutes=request.timezone_offset_minutes)
-        ).replace(tzinfo=UTC)
-        await _upsert_publication(
-            session, project, clip, scheduled_for, copy[clip.id], request.platforms
-        )
-    await session.commit()
-    return project_out(await load_project(session, project.id))
-
-
-@app.put("/api/projects/{project_id}/clips/{clip_id}/schedule", response_model=ProjectOut)
-async def manually_schedule_clip(
-    project_id: str,
-    clip_id: str,
-    request: ManualScheduleRequest,
-    session: AsyncSession = Depends(get_session),
-) -> ProjectOut:
-    project = await load_project(session, project_id)
-    clips = _approved_current_clips(project, [clip_id])
-    clip = clips[0]
-    copy = await _publishing_copy(project, clips)
-    scheduled_for = request.scheduled_for
-    if scheduled_for.tzinfo is None:
-        scheduled_for = scheduled_for.replace(tzinfo=UTC)
-    await _upsert_publication(
-        session, project, clip, scheduled_for, copy[clip.id], request.platforms
-    )
-    await session.commit()
-    return project_out(await load_project(session, project.id))
 
 
 @app.get("/api/clips/{clip_id}/media")

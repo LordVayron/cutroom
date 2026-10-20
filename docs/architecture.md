@@ -4,7 +4,7 @@ See FEATURES.md for the release status and SETUP.md for installation.
 
 ## First vertical slice
 
-`source + requested count -> real captions -> ranked clips -> render -> approve -> schedule/export`
+`source + requested count -> real captions -> ranked clips -> render -> approve -> export`
 
 The API owns durable state. The worker owns side effects. The browser never advances processing state directly.
 
@@ -45,9 +45,11 @@ The renderer samples short frame bursts with OpenCV's frontal-face and profile-f
 
 Every render builds an ASS subtitle track from the clip's word timeline. The project's source settings persist a Clean, Pulse, or Kinetic motion treatment, one of three bundled FFmpeg-safe typefaces, and a validated hex accent color. Phrase length changes with the motion level, and each event begins and ends on the source word timestamps with one active word highlighted. Sources without word metadata use a bounded per-cue estimate rather than stretching words across a multi-sentence passage.
 
-## Publishing queue
+## Removed publishing calendar
 
-Approved clips may be placed in `publication_schedules`. Automatic distribution spreads a selected set over one to seven local calendar days; manual drag-and-drop updates an individual scheduled date. Sol writes a short cover title and platform-neutral SEO caption, with deterministic copy as a fallback. Rows remain `queued` until a later platform integration publishes them.
+Calendar UI, scheduling client methods, and schedule-writing API routes are
+removed. Existing publication_schedules rows and the read-only response field
+remain for compatibility; no migration drops data. Approved clips can be exported.
 
 ## Current rendering and editing contracts
 
@@ -79,7 +81,7 @@ performance data. Quality reports assist review rather than guarantee correctnes
 
 The Cover Designer UI and ordinary cover-generation calls were removed. Legacy
 cover schema/routes remain. Manual analytics were removed; real analytics remain
-deferred. The calendar stores selected platforms but does not deliver to them.
+deferred. Publishing and calendar scheduling are unavailable.
 
 ## Distribution boundary
 

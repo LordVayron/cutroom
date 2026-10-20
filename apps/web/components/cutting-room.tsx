@@ -485,257 +485,6 @@ const rejectionReasons = [
   ["other", "Other"],
 ] as const;
 
-function localDateKey(date: Date): string {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-}
-
-function CalendarModal({
-  project,
-  onRefresh,
-  onClose,
-}: {
-  project: Project;
-  onRefresh: (project: Project) => void;
-  onClose: () => void;
-}) {
-  const approved = project.clips.filter((clip) => clip.status === "approved");
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(approved.map((clip) => clip.id)),
-  );
-  const [days, setDays] = useState(7);
-  const [platforms, setPlatforms] = useState<Set<ProjectSummary["platform"]>>(
-    () => new Set([project.platform]),
-  );
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const calendarDays = useMemo(
-    () => Array.from({ length: 7 }, (_, index) => {
-      const date = new Date();
-      date.setHours(0, 0, 0, 0);
-      date.setDate(date.getDate() + index);
-      return date;
-    }),
-    [],
-  );
-
-  function toggle(clipId: string) {
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(clipId)) next.delete(clipId);
-      else next.add(clipId);
-      return next;
-    });
-  }
-
-  function togglePlatform(platform: ProjectSummary["platform"]) {
-    setPlatforms((current) => {
-      const next = new Set(current);
-      if (next.has(platform)) {
-        if (next.size > 1) next.delete(platform);
-      } else {
-        next.add(platform);
-      }
-      return next;
-    });
-  }
-
-  async function distribute() {
-    if (selected.size === 0) return;
-    setBusy(true);
-    setError("");
-    try {
-      onRefresh(await api.autoSchedule(project.id, [...selected], days, [...platforms]));
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not build the queue");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function moveToDay(clipId: string, date: Date) {
-    const scheduled = new Date(date);
-    scheduled.setHours(10, 0, 0, 0);
-    setBusy(true);
-    setError("");
-    try {
-      onRefresh(await api.schedule(project.id, clipId, scheduled.toISOString(), [...platforms]));
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not move the clip");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const unscheduled = approved.filter((clip) => !clip.publication);
-
-  return (
-    <div className="calendar-backdrop" role="presentation" onMouseDown={onClose}>
-      <section
-        className="calendar-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Publishing calendar"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <header className="calendar-header">
-          <div>
-            <p className="eyebrow">Publishing queue / seven-day desk</p>
-            <h2>Give every clip its day.</h2>
-          </div>
-          <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
-        </header>
-
-        <div className="calendar-controls">
-          <div className="selection-control">
-            <button
-              type="button"
-              onClick={() =>
-                setSelected(
-                  selected.size === approved.length
-                    ? new Set<string>()
-                    : new Set(approved.map((clip) => clip.id)),
-                )
-              }
-            >
-              {selected.size === approved.length ? "Clear selection" : "Select all approved"}
-            </button>
-            <span>{selected.size} / {approved.length} selected</span>
-          </div>
-          <label className="distribution-control">
-            <span>Spread across</span>
-            <input
-              type="range"
-              min="1"
-              max="7"
-              value={days}
-              onChange={(event) => setDays(Number(event.target.value))}
-            />
-            <b>{days} {days === 1 ? "day" : "days"}</b>
-          </label>
-          <button
-            className="auto-schedule"
-            onClick={() => void distribute()}
-            disabled={busy || selected.size === 0}
-          >
-            {busy ? "Building queue…" : "Distribute automatically"}
-          </button>
-        </div>
-
-        <fieldset className="calendar-platforms">
-          <legend>Publish selected clips to</legend>
-          <div>
-            {(["tiktok", "reels", "shorts", "linkedin"] as const).map((platform) => (
-              <button
-                key={platform}
-                type="button"
-                className={platforms.has(platform) ? "active" : ""}
-                aria-pressed={platforms.has(platform)}
-                onClick={() => togglePlatform(platform)}
-              >
-                <span>{platforms.has(platform) ? "✓" : "+"}</span>
-                <b>{platform === "reels" ? "Instagram Reels" : platform === "shorts" ? "YouTube Shorts" : platform}</b>
-              </button>
-            ))}
-          </div>
-          <small>The queue will send each scheduled clip to every selected platform.</small>
-        </fieldset>
-
-        {error && <p className="form-error">{error}</p>}
-        {approved.length === 0 ? (
-          <div className="calendar-empty">
-            <b>No approved clips yet.</b>
-            <p>Render and approve the cuts you want to publish, then return here.</p>
-          </div>
-        ) : (
-          <>
-            {unscheduled.length > 0 && (
-              <div className="unscheduled-rack">
-                <span>Unscheduled / drag to a day</span>
-                <div>
-                  {unscheduled.map((clip) => (
-                    <article
-                      key={clip.id}
-                      draggable
-                      onDragStart={(event) => event.dataTransfer.setData("text/plain", clip.id)}
-                      className={selected.has(clip.id) ? "selected" : ""}
-                    >
-                      <button type="button" onClick={() => toggle(clip.id)}>
-                        {selected.has(clip.id) ? "✓" : "+"}
-                      </button>
-                      <b>{clip.title}</b>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="calendar-grid">
-              {calendarDays.map((date) => {
-                const key = localDateKey(date);
-                const clips = approved.filter(
-                  (clip) => clip.publication && localDateKey(new Date(clip.publication.scheduled_for)) === key,
-                );
-                return (
-                  <section
-                    key={key}
-                    className="calendar-day"
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      const clipId = event.dataTransfer.getData("text/plain");
-                      if (clipId) void moveToDay(clipId, date);
-                    }}
-                  >
-                    <header>
-                      <span>{date.toLocaleDateString(undefined, { weekday: "short" })}</span>
-                      <b>{date.getDate()}</b>
-                    </header>
-                    <div className="day-dropzone">
-                      {clips.length === 0 && <small>Drop clip</small>}
-                      {clips.map((clip) => (
-                        <article
-                          key={clip.id}
-                          draggable
-                          onDragStart={(event) => event.dataTransfer.setData("text/plain", clip.id)}
-                          className={selected.has(clip.id) ? "selected" : ""}
-                        >
-                          <button
-                            className="schedule-select"
-                            type="button"
-                            onClick={() => toggle(clip.id)}
-                            aria-label={`${selected.has(clip.id) ? "Deselect" : "Select"} ${clip.title}`}
-                          >
-                            {selected.has(clip.id) ? "✓" : "+"}
-                          </button>
-                          <time>
-                            {new Date(clip.publication!.scheduled_for).toLocaleTimeString([], {
-                              hour: "numeric",
-                              minute: "2-digit",
-                            })}
-                          </time>
-                          <b>{clip.publication!.cover_title}</b>
-                          <div className="scheduled-platforms">
-                            {clip.publication!.platforms.map((platform) => <i key={platform}>{platform}</i>)}
-                          </div>
-                          <p>{clip.publication!.seo_caption}</p>
-                          <span>{clip.publication!.status}</span>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </section>
-    </div>
-  );
-}
-
 function DirectorModal({
   project,
   clip,
@@ -1119,14 +868,12 @@ function ProjectWorkspace({
   onSelectClip,
   onRefresh,
   onChooseSource,
-  onOpenCalendar,
 }: {
   project: Project;
   selectedClip?: Clip;
   onSelectClip: (id: string) => void;
   onRefresh: (project: Project) => void;
   onChooseSource: () => void;
-  onOpenCalendar: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [inspecting, setInspecting] = useState(false);
@@ -1301,7 +1048,6 @@ function ProjectWorkspace({
             <button onClick={() => void renderAll()} disabled={busy || project.status === "rendering"}>
               Render all
             </button>
-            <button onClick={onOpenCalendar}>Calendar</button>
             <span className="count-mark">{String(project.clips.length).padStart(2, "0")}</span>
           </div>
         </div>
@@ -1539,7 +1285,6 @@ export function CuttingRoom() {
   const [project, setProject] = useState<Project | null>(null);
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
   const [showBrandFolder, setShowBrandFolder] = useState(false);
   const [newFolderId, setNewFolderId] = useState("");
   const [reanalyzing, setReanalyzing] = useState(false);
@@ -1765,7 +1510,6 @@ export function CuttingRoom() {
               onSelectClip={setSelectedClipId}
               onRefresh={acceptRefresh}
               onChooseSource={() => setShowNew(true)}
-              onOpenCalendar={() => setShowCalendar(true)}
             />
           </>
         )}
@@ -1786,13 +1530,6 @@ export function CuttingRoom() {
         <BrandFolderModal onClose={() => setShowBrandFolder(false)} onCreated={acceptBrandFolder} />
       )}
 
-      {showCalendar && project && (
-        <CalendarModal
-          project={project}
-          onRefresh={acceptRefresh}
-          onClose={() => setShowCalendar(false)}
-        />
-      )}
     </main>
   );
 }
