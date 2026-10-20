@@ -1,4 +1,23 @@
-# Cutroom
+<p align="center">
+  <img src="docs/images/wordmark.png" width="240" alt="Cutroom" />
+</p>
+
+<h1 align="center">Less digging. More worth sharing.</h1>
+
+<p align="center">Your long-form conversations, reimagined as short-form clips.<br />An AI-assisted editing studio. On your machine. In your hands.</p>
+
+<p align="center">
+  <a href="docs/SETUP.md">Get started</a> ·
+  <a href="docs/SCREENSHOTS.md">See the studio</a> ·
+  <a href="docs/README.md">Documentation</a> ·
+  <a href="CONTRIBUTING.md">Contribute</a>
+</p>
+
+![Cutroom's branded editing workspace, showing fictional demo projects](docs/images/workspace.webp)
+
+*Actual interface, fictional demo data. No private episodes or recordings are included.*
+
+## From a long recording to a clip worth sharing
 
 Cutroom turns long videos and podcasts into ranked short-form clip candidates,
 then lets you refine framing, captions, and branding before exporting MP4s.
@@ -7,6 +26,14 @@ It is a local-first Next.js / FastAPI application, not a hosted publishing servi
 [Product website](https://cutroom-website-delta.vercel.app) ·
 [Website source](https://github.com/LordVayron/cutroom-website).
 The Vercel landing page introduces the product; it does not host the editor.
+
+The recording is done. The work isn't: scrubbing footage, finding a hook,
+reframing, captioning, and repeating it for every clip. Cutroom helps with that
+busywork while keeping the creative decisions and final approval with you.
+
+| Bring your film | Find your moments | Make it yours |
+| --- | --- | --- |
+| Upload a video or paste a YouTube link. | Review ranked candidates and transcript excerpts. | Refine framing, captions, and branding; inspect and export. |
 
 ## Install with your coding agent
 
@@ -31,6 +58,23 @@ python scripts/install.py --start
 Use python3 on macOS/Linux or py -3 on Windows if needed. The helper creates a local
 .env only if none exists, builds/starts Compose, checks readiness, and opens
 http://localhost:3000. It never installs Docker, collects keys, or resets data.
+
+## Inside the studio
+
+### Director Mode
+
+Refine the words, their rhythm, the frame, and your logo without leaving the clip.
+
+![Director Mode caption controls in the branded Cutroom interface](docs/images/director.webp)
+
+### One brand, many films
+
+Save your caption look and logo defaults in a brand folder. New films inherit
+those settings, and individual clips remain editable.
+
+![Cutroom brand-folder settings with a fictional Studio Notes brand](docs/images/brand.webp)
+
+[View the screenshot gallery and privacy notes →](docs/SCREENSHOTS.md)
 
 ## Features
 
@@ -108,3 +152,19 @@ Read [Setup](docs/SETUP.md), [architecture](docs/architecture.md),
 Clean-container build/test status is available in the repository's Actions tab.
 Read [verification boundaries](docs/VERIFICATION.md) before assuming a passing
 build covers provider-dependent ingestion or a particular source video.
+
+## Find your way around
+
+| Location | Purpose |
+| --- | --- |
+| `apps/web/` | Next.js editor interface |
+| `services/api/` | FastAPI, worker, rendering pipeline, migrations, and tests |
+| `scripts/` | Local installation and startup helpers |
+| `docs/` | Setup, feature status, architecture, verification, and screenshots |
+| `storage/` | Local runtime media; never commit its contents |
+| `.github/` | CI and contribution templates |
+
+Start with the [documentation index](docs/README.md). For changes, read
+[contributing](CONTRIBUTING.md); report vulnerabilities privately using
+[SECURITY.md](SECURITY.md). This repository contains the local editor;
+the product website is maintained separately.
