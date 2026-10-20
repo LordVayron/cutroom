@@ -266,16 +266,6 @@ class RankedMoments(BaseModel):
     moments: list[RankedMoment]
 
 
-class PublishingCopy(BaseModel):
-    clip_id: str
-    cover_title: str = Field(min_length=3, max_length=60)
-    seo_caption: str = Field(min_length=12, max_length=500)
-
-
-class PublishingCopies(BaseModel):
-    clips: list[PublishingCopy]
-
-
 def _series_candidates(
     segments: list[TimedText], excluded_ranges: list[tuple[float, float]], limit: int = 8
 ) -> list[Candidate]:
@@ -535,41 +525,3 @@ class AIClipRanker:
             ):
                 chosen.append(source)
         return sorted(chosen[: self.limit], key=lambda candidate: -candidate.score)
-
-
-async def generate_publishing_copy(
-    clips: list[dict[str, str]], model: str
-) -> dict[str, tuple[str, str]]:
-    fallback = {
-        clip["clip_id"]: (
-            clip["title"][:60],
-            f"{clip['rationale']} Watch the full idea and save it for later. #podcast #shorts",
-        )
-        for clip in clips
-    }
-    if not clips or not os.getenv("OPENAI_API_KEY"):
-        return fallback
-    try:
-        response = await AsyncOpenAI().responses.parse(
-            model=model,
-            reasoning={"effort": "low"},
-            store=False,
-            max_output_tokens=1800,
-            text_format=PublishingCopies,
-            instructions=(
-                "Write platform-neutral discovery copy for each approved podcast clip. Create a "
-                "punchy 3-7 word cover title and a natural SEO caption under 400 characters. Put "
-                "the main searchable topic in the first sentence, describe the payoff without "
-                "clickbait, and end with no more than three specific hashtags. Preserve clip_id."
-            ),
-            input=json.dumps(clips, ensure_ascii=False),
-        )
-        parsed = response.output_parsed
-        if not parsed:
-            return fallback
-        for item in parsed.clips:
-            if item.clip_id in fallback:
-                fallback[item.clip_id] = (item.cover_title.strip(), item.seo_caption.strip())
-    except Exception as exc:
-        logger.warning("Publishing copy generation failed; using fallback: %s", exc)
-    return fallback

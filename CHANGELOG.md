@@ -1,5 +1,11 @@
 # Changelog
 
+## Publishing calendar removed — 2026-10-20
+
+- Removed the Calendar button, scheduling dialog, client methods, and scheduling routes.
+- Preserved historical records, approvals, rendering, and MP4 export.
+- Refreshed demo screenshots and documentation to reflect the removal.
+
 ## Product website — 2026-10-19
 
 - Implemented the approved organic editorial direction as responsive HTML/CSS.

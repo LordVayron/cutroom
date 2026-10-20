@@ -35,6 +35,6 @@ No secrets, media, transcripts, databases, real episode screenshots, personal pa
 private designs, or provider job records in public releases. Do not publish local
 Git history. Do not push, deploy publicly, or spend credits without authorization.
 
-The calendar is an internal queue, not a social publisher. Manual analytics and
-Cover Designer UI are removed. The landing page is a separate static website in
+Publishing calendar UI and scheduling routes are removed; preserve legacy records.
+Manual analytics and Cover Designer UI are removed. The landing page is a separate static website in
 landing-site/, released independently from the local editor.

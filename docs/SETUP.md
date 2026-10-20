@@ -44,7 +44,6 @@ start Docker Desktop. Personal Start Menu shortcuts are not distributed.
 - Model inaccessible: choose an accessible model; refresh API/worker environments.
 - Old rendered file: rerender after renderer-version changes.
 - Slow processing: CPU tracking/layout, decoding, and encoding take time.
-- Empty calendar: approve rendered clips. This is an internal queue, not delivery.
 - Build/dev conflict: stop web before production builds, then restart web.
 - Database failure: inspect migration logs privately, never remove volumes as a fix.
 

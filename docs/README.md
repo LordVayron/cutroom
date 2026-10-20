@@ -14,5 +14,5 @@ New here? Follow [Setup](SETUP.md), then open the local editor.
 | [Contributing](../CONTRIBUTING.md) | Development workflow and safe pull requests |
 | [Security](../SECURITY.md) | Credential handling and vulnerability reporting |
 
-The editor runs locally. The calendar is an internal planning queue, not an
-automatic social publisher. Provider-backed operations may incur API charges.
+The editor runs locally. Publishing and scheduling are not available.
+Provider-backed operations may incur API charges.

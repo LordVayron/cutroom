@@ -227,21 +227,4 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ index }),
     }),
-  autoSchedule: (projectId: string, clipIds: string[], days: number, platforms: ProjectSummary["platform"][]) =>
-    request<Project>(`/api/projects/${projectId}/schedule/auto`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        clip_ids: clipIds,
-        days,
-        platforms,
-        timezone_offset_minutes: new Date().getTimezoneOffset(),
-      }),
-    }),
-  schedule: (projectId: string, clipId: string, scheduledFor: string, platforms: ProjectSummary["platform"][]) =>
-    request<Project>(`/api/projects/${projectId}/clips/${clipId}/schedule`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scheduled_for: scheduledFor, platforms }),
-    }),
 };
