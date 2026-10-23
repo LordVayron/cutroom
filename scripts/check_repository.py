@@ -55,6 +55,11 @@ def file_errors(name, data, public=False):
     basename = parts[-1]
     runtime = {"node_modules", ".next", ".vercel", "__pycache__", ".venv"}
     suffixes = {".key", ".pem", ".p12", ".pfx", ".sqlite3", ".db", ".dump", ".bak", ".log"}
+    suffixes.update({
+        ".sqlite", ".orig", ".old", ".tmp", ".zip", ".7z", ".rar", ".tar", ".gz",
+        ".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".mp3", ".wav",
+        ".m4a", ".flac", ".aac", ".ogg",
+    })
     if ((basename == ".env" or basename.startswith(".env.")) and basename != ".env.example"
             or runtime.intersection(parts) or PurePosixPath(name).suffix.lower() in suffixes):
         errors.append("Credential, runtime, or backup file")

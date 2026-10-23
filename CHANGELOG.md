@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 — Unreleased
+## 0.1.1 — 2026-10-23
 
 ### Fixed
 
@@ -12,6 +12,12 @@
   short-shot, cache-invalidation, and expression-depth regression tests.
 
 ## Unreleased
+
+### Repository safety
+
+- Ignore source media, compressed archives, and additional backup/database files.
+- Reject those files in repository policy checks, with ignore-rule regressions.
+- Align the published release heading with its release date.
 
 ### CI
 
