@@ -51,7 +51,7 @@ class PermanentPipelineError(ValueError):
 
 logger = logging.getLogger(__name__)
 ANALYSIS_CACHE_VERSION = 1
-SPEAKER_TRACKING_VERSION = 1
+SPEAKER_TRACKING_VERSION = 3
 
 
 def store_hook_repair(

@@ -53,7 +53,15 @@ remain for compatibility; no migration drops data. Approved clips can be exporte
 
 ## Current rendering and editing contracts
 
-Renderer v19 analyzes per-clip scenes before composition. Simultaneously visible,
+Tracking decodes the clip range to locate camera cuts, then runs the existing
+face/profile/body observations, speaker selector, and stabilizer independently
+inside each shot. Crop maps switch at the first decoded frame of a new shot;
+motion samples cannot cross its boundary. Constant runs are compacted and
+conditional selectors balanced to bound FFmpeg parser depth without changing
+crop timing or easing. Tracking cache v3 invalidates earlier expressions.
+This remains heuristic tracking, not guaranteed person identification.
+
+Renderer v22 analyzes per-clip scenes before composition. Simultaneously visible,
 verified camera tiles may use Duo. Mouth-motion evidence chooses two participants;
 it does not manufacture camera views from separate cuts. Automatic uncertain
 shots use a filled speaker crop, not added empty letterboxing. Full frame is an

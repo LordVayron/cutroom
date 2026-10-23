@@ -93,6 +93,7 @@ those settings, and individual clips remain editable.
 - Collapsible library, three-dot actions, archive/restore, and soft removal.
 - Render all, quality inspection, human review/approval, and MP4 export.
 - Transcript, analysis, layout, and tracking caches.
+- Cut-aware speaker crops prepared per shot, with bounded FFmpeg expressions.
 - Plum/ivory/sage interface and PNG wordmark.
 
 ## Limits and deferred integrations

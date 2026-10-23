@@ -1,5 +1,15 @@
 # Release verification
 
+## Cut-aware tracking candidate
+
+Synthetic regression tests cover decoded cut timestamps, independent shot
+targets, very short shots, bounded motion windows, cache invalidation, and
+FFmpeg acceptance of long tracking expressions. Marker-based render tests
+check every output frame around a camera cut without private recordings.
+These tests isolate timing from face-model accuracy; real-source and variable
+frame-rate behavior still require source-specific review. Check the PR's CI
+result for the public candidate's full suite and clean build.
+
 ## Completed locally
 
 - Four non-destructive installer regression tests pass.

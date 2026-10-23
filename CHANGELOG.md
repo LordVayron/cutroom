@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.1 — Unreleased
+
+### Fixed
+
+- Compute independent speaker crops at decoded camera cuts instead of carrying
+  the previous shot's crop and motion evidence into a new take.
+- Compact constant crop runs and balance conditions to avoid FFmpeg parser-depth
+  failures on long clips and dense edits.
+- Bump renderer to v22 and tracking cache to v3; add synthetic frame-clock,
+  short-shot, cache-invalidation, and expression-depth regression tests.
+
 ## Unreleased
 
 ### CI
