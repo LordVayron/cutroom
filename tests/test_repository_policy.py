@@ -45,6 +45,22 @@ class PolicyTests(unittest.TestCase):
         self.assertTrue(policy.file_errors("README.md", b"person" + b"@mail.test", public=True))
         self.assertFalse(policy.file_errors("test.py", b"person" + b"@sample.invalid", public=True))
 
+    def test_media_archives_and_backups_are_ignored_and_rejected(self):
+        for suffix in ["mp4", "mov", "mkv", "avi", "webm", "m4v", "mp3", "wav",
+                       "m4a", "flac", "aac", "ogg", "zip", "7z", "rar", "tar", "gz",
+                       "bak", "orig", "old", "tmp", "db", "sqlite", "sqlite3", "pfx"]:
+            name = f"sample.{suffix}"
+            self.assertTrue(policy.file_errors(name, b"", public=True), name)
+            result = subprocess.run(
+                ["git", "check-ignore", "--no-index", "-q", name], cwd=policy.ROOT
+            )
+            self.assertEqual(result.returncode, 0, name)
+        for name in [".env.example", "docs/images/wordmark.png", "storage/.gitkeep"]:
+            result = subprocess.run(
+                ["git", "check-ignore", "--no-index", "-q", name], cwd=policy.ROOT
+            )
+            self.assertEqual(result.returncode, 1, name)
+
     def test_pr_requires_scope_labels_and_main(self):
         pr = {"title": "ci: validate source changes", "body": "[public] Change: add checks.\n[private] Scope: none.",
               "head": {"ref": "ci/repository-policy"}, "base": {"ref": "main"}}
