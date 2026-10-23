@@ -52,3 +52,13 @@ def test_speaker_tracking_cache_changes_only_with_media_or_cut(tmp_path: Path) -
 
     source.write_bytes(b"changed-video")
     assert speaker_tracking_cache_key(source, 10, 40) != baseline
+
+
+def test_cut_aware_tracking_invalidates_older_maps(tmp_path, monkeypatch):
+    from app import pipeline
+
+    source = tmp_path / "source.mp4"
+    source.write_bytes(b"video")
+    current = pipeline.speaker_tracking_cache_key(source, 0, 10)
+    monkeypatch.setattr(pipeline, "SPEAKER_TRACKING_VERSION", 1)
+    assert pipeline.speaker_tracking_cache_key(source, 0, 10) != current
