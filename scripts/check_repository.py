@@ -20,7 +20,9 @@ PATHS = re.compile(rb"(?:[A-Z]:[\\/]Users[\\/]|/(?:Users|home)/)", re.I)
 EMAILS = re.compile(rb"[A-Z0-9._%+-]{1,128}@[A-Z0-9.-]{1,128}\.[A-Z]{2,16}", re.I)
 DIRECTIVES = re.compile(
     rb"(?:user\s+(?:asked|requested)|as\s+requested|per\s+(?:the\s+)?user|"
-    rb"el\s+usuario\s+(?:pidio|pidi\xc3\xb3))", re.I
+    rb"el\s+usuario\s+(?:pidio|pidi\xc3\xb3)|"
+    rb"the\s+user\s+(?:resumed|approved|requested)|"
+    rb"reference\s+supplied\s+by\s+the\s+user|per\s+user\s+reference)", re.I
 )
 MAX_BYTES = 5 * 1024 * 1024
 
@@ -53,6 +55,10 @@ def file_errors(name, data, public=False):
     errors = content_errors(data)
     parts = PurePosixPath(name).parts
     basename = parts[-1]
+    if parts[0] == "design" and (
+        basename in {"prompts.json", "jobs.json"} or basename.endswith("-result.json")
+    ):
+        errors.append("Internal design-generation record")
     runtime = {"node_modules", ".next", ".vercel", "__pycache__", ".venv"}
     suffixes = {".key", ".pem", ".p12", ".pfx", ".sqlite3", ".db", ".dump", ".bak", ".log"}
     suffixes.update({
