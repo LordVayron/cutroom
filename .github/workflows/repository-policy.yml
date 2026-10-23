@@ -1,0 +1,31 @@
+name: Repository policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test repository policy
+        run: python -m unittest discover -s tests -v
+      - name: Validate new changes and pull request metadata
+        env:
+          POLICY_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          POLICY_AUDIENCE: ${{ github.event.repository.private && 'private' || 'public' }}
+        run: python scripts/check_repository.py --base "$POLICY_BASE" --audience "$POLICY_AUDIENCE"
