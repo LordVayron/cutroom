@@ -15,6 +15,8 @@
 
 ### Repository safety
 
+- Reject internal design-generation records and conversational attribution in
+  documentation, with regression coverage that preserves product terminology.
 - Ignore source media, compressed archives, and additional backup/database files.
 - Reject those files in repository policy checks, with ignore-rule regressions.
 - Align the published release heading with its release date.

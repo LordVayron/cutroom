@@ -38,6 +38,19 @@ class PolicyTests(unittest.TestCase):
         self.assertFalse(policy.file_errors(".env.example", b"OPENAI_API_KEY="))
         self.assertTrue(policy.file_errors("large.bin", b"x" * (policy.MAX_BYTES + 1)))
 
+    def test_blocks_design_generation_records(self):
+        for name in ["design/sample/prompts.json", "design/sample/jobs.json",
+                     "design/sample/hero-result.json"]:
+            self.assertIn("Internal design-generation record", policy.file_errors(name, b"{}"))
+        self.assertFalse(policy.file_errors("docs/images/wordmark.png", b""))
+
+    def test_blocks_documentation_context_without_matching_product_terms(self):
+        for prefix, suffix in [(b"the user ", b"resumed development"),
+                               (b"reference supplied ", b"by the user"),
+                               (b"per " + b"user ", b"reference")]:
+            self.assertIn("Conversational instruction attribution", policy.content_errors(prefix + suffix))
+        self.assertFalse(policy.content_errors(b"Review approved concepts before exporting clips."))
+
     def test_public_scope_and_email_checks(self):
         self.assertTrue(policy.file_errors("design/draft.md", b"draft", public=True))
         self.assertFalse(policy.file_errors("design/draft.md", b"draft", public=False))
