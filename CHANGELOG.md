@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### CI
+
+- Validate new commits for credential patterns, personal paths, restricted files,
+  PR metadata, and changelog coverage before source changes are merged.
+- Add policy regression tests and release-scope guidance for contributions.
+
 ## Publishing calendar removed — 2026-10-20
 
 - Removed the Calendar button, scheduling dialog, client methods, and scheduling routes.

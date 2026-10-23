@@ -1,16 +1,5 @@
-## What changed?
-
-Describe the problem and the focused change.
-
-## Verification
-
-List checks actually completed. Identify media- or credential-dependent checks
-that were not run.
-
-## Checklist
-
-- [ ] Tests and relevant documentation are updated.
-- [ ] No credentials, private media/transcripts, databases, personal paths, or provider records.
-- [ ] Screenshots use fictional demo data only.
-- [ ] Rendering changes include a version bump and regression tests, if applicable.
-- [ ] Schema changes include a new migration, if applicable.
+[public] Change: describe the implementation and its technical purpose.
+[public] Verification: list completed checks and any untested boundaries.
+[public] Changelog: identify the entry included in this change.
+[public] Release scope: identify files suitable for the public source snapshot.
+[private] Release scope: identify private-only files, or state none.
