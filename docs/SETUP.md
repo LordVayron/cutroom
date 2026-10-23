@@ -43,6 +43,9 @@ start Docker Desktop. Personal Start Menu shortcuts are not distributed.
 - No transcript: use permitted captioned sources or configure transcription.
 - Model inaccessible: choose an accessible model; refresh API/worker environments.
 - Old rendered file: rerender after renderer-version changes.
+- Cut-aware tracking uses renderer v22 and tracking cache v3. Rerender to apply
+  the new crop maps. The first pass decodes the clip range before tracking each
+  shot; preparation time depends on source and hardware.
 - Slow processing: CPU tracking/layout, decoding, and encoding take time.
 - Build/dev conflict: stop web before production builds, then restart web.
 - Database failure: inspect migration logs privately, never remove volumes as a fix.

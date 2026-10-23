@@ -15,7 +15,7 @@ from app.layout import analyze_layout
 
 logger = logging.getLogger(__name__)
 
-CURRENT_RENDER_VERSION = 19
+CURRENT_RENDER_VERSION = 22
 
 CAPTION_FONTS = {
     "sans": ("DejaVu Sans", 72),
@@ -253,21 +253,37 @@ def _stabilize_crop_positions(
     return [round(min(max_x, max(0.0, value))) for value in held]
 
 
+def _piecewise_crop_expression(boundaries: list[float], segments: list[str]) -> str:
+    """Bound parser depth without changing which expression owns each time range."""
+    def build(left: int, right: int) -> str:
+        if right - left == 1:
+            return segments[left]
+        middle = (left + right) // 2
+        return (
+            f"if(lt(t\\,{boundaries[middle - 1]})\\,"
+            f"{build(left, middle)}\\,{build(middle, right)})"
+        )
+
+    return build(0, len(segments))
+
+
 def _interpolated_crop_expression(
     positions: list[int], interval: float, hard_cut_indices: set[int] | None = None
 ) -> str:
     if len(positions) == 1:
         return str(positions[0])
     hard_cut_indices = hard_cut_indices or set()
-    expression = str(positions[-1])
+    boundaries = []
+    segments = []
     transition = min(0.45, interval * 0.6)
-    for index in range(len(positions) - 2, -1, -1):
+    for index in range(len(positions) - 1):
         next_index = index + 1
+        if positions[index] == positions[next_index]:
+            continue
         if next_index in hard_cut_indices:
             cut_boundary = round((index + 0.5) * interval, 3)
-            expression = (
-                f"if(lt(t\\,{cut_boundary})\\,{positions[index]}\\,{expression})"
-            )
+            boundaries.append(cut_boundary)
+            segments.append(str(positions[index]))
             continue
         boundary = round((index + 1) * interval, 3)
         delta = positions[index + 1] - positions[index]
@@ -280,8 +296,9 @@ def _interpolated_crop_expression(
             )
         else:
             segment = str(positions[index])
-        expression = f"if(lt(t\\,{boundary})\\,{segment}\\,{expression})"
-    return expression
+        boundaries.append(boundary)
+        segments.append(segment)
+    return _piecewise_crop_expression(boundaries, [*segments, str(positions[-1])])
 
 
 def _scene_change_score(
@@ -416,6 +433,7 @@ def _sample_motion_frames(
     fps: float,
     clip_start: float,
     clip_end: float,
+    allow_short: bool = False,
 ) -> (
     tuple[
         cv2.typing.MatLike,
@@ -428,6 +446,8 @@ def _sample_motion_frames(
     motion_span = 0.24
     sample_start = max(clip_start, timestamp - motion_span / 2)
     sample_end = min(clip_end, timestamp + motion_span / 2)
+    if sample_start >= clip_end:
+        return None
     capture.set(cv2.CAP_PROP_POS_MSEC, sample_start * 1000)
     frame_count = max(3, round(max(12.0, fps) * (sample_end - sample_start)) + 1)
     frames = []
@@ -435,8 +455,12 @@ def _sample_motion_frames(
         ok, frame = capture.read()
         if not ok:
             break
+        if capture.get(cv2.CAP_PROP_POS_MSEC) / 1000 >= clip_end:
+            break
         frames.append(frame)
     if len(frames) < 3:
+        if allow_short and frames:
+            return frames[0], frames[len(frames) // 2], frames[-1], False
         return None
     contains_hard_cut = _contains_hard_cut(frames)
     if contains_hard_cut:
@@ -447,8 +471,9 @@ def _sample_motion_frames(
     return frames[0], frames[len(frames) // 2], frames[-1], False
 
 
-def _speaker_crop_expression(
-    source: Path, start: float, end: float, output_width: int = 1080, output_height: int = 1920
+def _speaker_crop_segment(
+    source: Path, start: float, end: float, output_width: int = 1080,
+    output_height: int = 1920, sample_interval: float | None = None,
 ) -> tuple[str, int]:
     capture = cv2.VideoCapture(str(source))
     width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
@@ -468,7 +493,7 @@ def _speaker_crop_expression(
         cv2.data.haarcascades + "haarcascade_upperbody.xml"
     )
     duration = max(1.0, end - start)
-    interval = min(1.0, max(0.75, duration / 45))
+    interval = sample_interval or min(1.0, max(0.75, duration / 45))
     sample_count = max(1, int(duration / interval) + 1)
     scaled_width = width * output_height / height
     max_x = max(0.0, scaled_width - output_width)
@@ -482,7 +507,7 @@ def _speaker_crop_expression(
     for index in range(sample_count):
         offset = min(duration, index * interval)
         sampled_frames = _sample_motion_frames(
-            capture, start + offset, fps, start, end
+            capture, start + offset, fps, start, end, allow_short=sample_interval is not None
         )
         crop_position: float | None = None
         if sampled_frames:
@@ -576,6 +601,59 @@ def _speaker_crop_expression(
         _interpolated_crop_expression(stabilized, interval, hard_cut_indices),
         detected,
     )
+
+
+def _tracking_shot_boundaries(source: Path, start: float, end: float) -> list[float]:
+    """Locate edits on the decoded frame clock before computing any crop targets."""
+    capture = cv2.VideoCapture(str(source))
+    boundaries = []
+    try:
+        if not capture.isOpened():
+            return boundaries
+        fps = capture.get(cv2.CAP_PROP_FPS)
+        if fps <= 0:
+            return boundaries
+        capture.set(cv2.CAP_PROP_POS_MSEC, start * 1000)
+        previous = None
+        while True:
+            ok, frame = capture.read()
+            if not ok:
+                break
+            timestamp = capture.get(cv2.CAP_PROP_POS_MSEC) / 1000
+            if timestamp <= 0:
+                timestamp = (capture.get(cv2.CAP_PROP_POS_FRAMES) - 1) / fps
+            if timestamp >= end:
+                break
+            if timestamp < start:
+                continue
+            small = cv2.cvtColor(cv2.resize(frame, (160, 90)), cv2.COLOR_BGR2GRAY)
+            if previous is not None and _scene_change_score(previous, small) >= 32:
+                boundaries.append(round(timestamp - start, 6))
+            previous = small
+    finally:
+        capture.release()
+    return boundaries
+
+
+def _speaker_crop_expression(
+    source: Path, start: float, end: float, output_width: int = 1080, output_height: int = 1920
+) -> tuple[str, int]:
+    boundaries = _tracking_shot_boundaries(source, start, end)
+    if not boundaries:
+        return _speaker_crop_segment(source, start, end, output_width, output_height)
+    edges = [0.0, *boundaries, end - start]
+    shots = []
+    detected = 0
+    interval = min(1.0, max(0.75, max(1.0, end - start) / 45))
+    for left, right in zip(edges, edges[1:]):
+        expression, count = _speaker_crop_segment(
+            source, start + left, start + right, output_width, output_height, interval
+        )
+        # Targets and motion windows stay inside their own shot, even when the
+        # first usable face observation occurs after the opening frame.
+        shots.append(re.sub(r"\bt\b", f"(t-{left:.6f})", expression))
+        detected += count
+    return _piecewise_crop_expression(boundaries, shots), detected
 
 
 async def track_speaker_crop(

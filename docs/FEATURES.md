@@ -7,7 +7,9 @@ Updated for the 2026-10-19 source release.
 - Ingestion, timed transcripts, 1–20 clips, range memory, and duplicate-concept
   heuristics informed by approval/rejection feedback.
 - Rare series and longer clips, capped at 120 seconds.
-- Renderer v19: scene layouts, verified Duo, mouth-motion tracking, filled auto crop.
+- Renderer v22: scene layouts, verified Duo, mouth-motion tracking, filled auto crop.
+- Shot-local speaker crops switch on decoded camera-cut timestamps; bounded
+  expressions avoid FFmpeg parser-depth failures. Same-shot selection is unchanged.
 - Manual Full frame preserves the image over a blurred video background.
 - Shared-clock silence edits and language-aware, cleaned, word-timed captions.
 - Clean/Pulse/Kinetic, fonts, colors, phrase length, size, and safe positioning.
